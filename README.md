@@ -78,4 +78,8 @@ Este script envuelve las acciones ejecutadas sobre postgres.
 
         domaccion -r -n [nombre de la base de datos] -s [nombre/path del script]
         
+
+## domaccion ##
+[TO DO]
+
 <!--#***bold italic***  **bold** ***bold italic***-->
