@@ -70,15 +70,6 @@ Este script envuelve las acciones ejecutadas sobre postgres.
 
         domaccion -d [nombre del dominio]
 
-   4. Para importar instrucciones de un script a una base de datos (**-i, -n, -s**)
-
-        domaccion -i -n [nombre de la base de datos] -s [nombre/path del script]
-        
-   4. Para reemplazar contenido de una base de datos con un script (**-r, -n, -s**)
-
-        domaccion -r -n [nombre de la base de datos] -s [nombre/path del script]
-        
-
 ## domaccion ##
 [TO DO]
 
