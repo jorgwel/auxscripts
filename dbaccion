@@ -1,0 +1,219 @@
+#!/bin/sh
+valid_user_name="postgres"
+current_user_name=`whoami`
+
+action="None"
+
+actionProcessed=0
+
+
+if [ `echo "$current_user_name" |grep -c "$valid_user_name"` -ne 1 ]; then
+    echo "Debes estar logueado como \"postgres\" para usar este comando."
+    echo "Terminando..."
+    exit
+fi
+
+while getopts :rin:s:e:c:b: option
+do
+    case "$option" in
+    e)
+
+        echo "Verificando estado de $OPTARG..."
+        exists=`psql -l | egrep " $OPTARG " | wc -l`
+
+        if [ $exists -eq 1 ]; then
+            echo "La base de datos $OPTARG ya existe."
+        else
+         
+            if [ $exists -eq 0 ]; then
+                echo "La base de datos $OPTARG no existe."
+            fi
+        fi
+        
+        exit
+
+        ;;
+    i)
+
+        if [ $actionProcessed -eq 1 ]; then
+            echo "##########################"
+            echo "Error solo se puede realizar una acción por comando"
+            echo "##########################"
+            exit
+        fi
+
+        action="import"
+        
+        actionProcessed=1
+        ;;
+    r)
+
+        if [ $actionProcessed -eq 1 ]; then
+            echo "##########################"
+            echo "Error solo se puede realizar una acción por comando"
+            echo "##########################"
+            exit
+        fi
+
+        action="replace"
+        
+        actionProcessed=1
+
+         ;;
+    n)
+
+        if [ `echo $action | grep -c "import"` -ne 1 ] && [ `echo $action | grep -c "replace"` -ne 1 ]; then
+            echo "##########################"
+            echo "Error, argumento inválido 1..."
+            echo "##########################"
+            exit            
+        fi
+
+        name=$OPTARG
+
+        echo "Base de datos: $name"
+
+         ;;
+    s)
+
+        if [ `echo $action | grep -c "import"` -ne 1 ] && [ `echo $action | grep -c "replace"` -ne 1 ]; then
+            echo "##########################"
+            echo "Error, argumento inválido 2..."
+            echo "##########################"
+            exit            
+        fi
+
+        script=$OPTARG
+
+        echo "Script: $script"
+
+        ;;
+
+
+    c)
+
+        name=$OPTARG
+        echo -n "\n"
+        echo "Se van a crear una nueva base de datos con nombre \"$name\""
+
+        echo -n "¿Está usted de acuerdo? (yes/no): "
+
+        read answer
+
+        if [ `echo $answer | grep -c "yes"` -eq 1 ]; then
+            echo "Creating database $name"
+            echo `psql -c "CREATE DATABASE $name"`
+            exit
+        fi
+        ;;
+
+    b)
+
+        name=$OPTARG
+        echo -n "\n"
+
+
+        if [ `psql -l | egrep " $name " | wc -l` -eq 0 ]; then
+            echo "##########################"
+            echo "La base de datos \"$name\"no existe"
+            echo "##########################"
+            exit        
+        fi
+
+        echo "Se van a eliminar la base de datos \"$name\""
+
+        echo -n "¿Está usted de acuerdo? (yes/no): "
+
+        read answer
+
+        if [ `echo $answer | grep -c "yes"` -eq 1 ]; then
+            echo "Deleting database $name"
+            echo `psql -c "DROP DATABASE $name"`
+            exit
+        fi
+        ;;
+    *)
+        echo "Mal uso del comando domaction"
+        #echo "Here's the usage statement:"
+        #echo ""
+        #displayTpUsageStatement
+        #return
+        ;;
+        esac
+done
+
+
+if [ `echo $action | grep -c "import"` -eq 1 ] && [  -n "$name" ] && [  -n "$script" ]; then
+    
+    if [ `psql -l | egrep " $name " | wc -l` -eq 1 ]; then
+        echo -n "\n"
+        echo "Se van a escribir en la base de datos \"$name\" las instrucciones del script \"$script\""
+
+        echo -n "¿Está usted de acuerdo? (yes/no): "
+
+        read answer
+
+        if [ `echo $answer | grep -c "yes"` -eq 1 ]; then
+
+            echo "Importing script...into $name"
+            echo "===================="
+            echo `psql $name < $script`
+            
+        elif [ `echo $answer | grep -c "no"` -eq 1 ]; then
+            echo "..."
+        else
+            echo "...ERROR"
+        fi
+
+
+
+    elif [ `psql -l | egrep " $name " | wc -l` -eq 0 ]; then
+        echo "##########################"
+        echo "La base de datos no existe"
+        echo "##########################"
+        exit
+    else
+        echo "Error desconocido validando argumentos para importar/reemplazar la base de datos"
+    fi
+elif [ `echo $action | grep -c "replace"` -eq 1 ] && [  -n "$name" ] && [  -n "$script" ]; then
+    
+    if [ `psql -l | egrep " $name " | wc -l` -eq 1 ]; then
+        echo -n "\n"
+        echo "Se va a reemplazar el contenido de la base de datos \"$name\" con las instrucciones del script \"$script\""
+
+        echo -n "¿Está usted de acuerdo? (yes/no): "
+
+        read answer
+
+        if [ `echo $answer | grep -c "yes"` -eq 1 ]; then
+
+            echo "Importing script...into $name"
+            echo "===================="
+            echo `psql -c "DROP DATABASE $name"`
+            echo `psql -c "CREATE DATABASE $name"`
+            echo `psql $name < $script`
+            
+        elif [ `echo $answer | grep -c "no"` -eq 1 ]; then
+            echo "..."
+        else
+            echo "...ERROR"
+        fi
+
+
+
+    elif [ `psql -l | egrep " $name " | wc -l` -eq 0 ]; then
+        echo "##########################"
+        echo "La base de datos no existe"
+        echo "##########################"
+        exit
+    else
+        echo "Error desconocido validando argumentos para importar/reemplazar la base de datos"
+    fi
+else 
+    echo "##########################"
+    echo "Some arguments are missing..."
+    echo "##########################"
+fi
+
+
+echo $name, $script,$action,`echo $action | grep -c "import"`

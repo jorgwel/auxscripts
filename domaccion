@@ -1,0 +1,75 @@
+#!/bin/sh
+
+argumentProcessed=0
+
+while getopts :v:i:d:r: option
+do
+    case "$option" in
+    v)
+        if [ $argumentProcessed -eq 1 ]; then
+            echo "##################"
+            echo "El comando solo acepta un argumento"
+            echo "##################"
+            exit
+        fi
+
+
+        echo "Verificando estado de $OPTARG..."
+        echo `$GLASSFISH_HOME/bin/asadmin list-domains | grep $OPTARG` 
+        argumentProcessed=1
+         ;;
+    i)
+        if [ $argumentProcessed -eq 1 ]; then
+            echo "##################"
+            echo "El comando solo acepta un argumento"
+            echo "##################"
+            exit
+        fi
+
+        echo "Iniciando $OPTARG..."
+        echo `$GLASSFISH_HOME/bin/asadmin start-domain $OPTARG` 
+
+        argumentProcessed=1
+         ;;
+    d)
+        if [ $argumentProcessed -eq 1 ]; then
+            echo "##################"
+            echo "El comando solo acepta un argumento"
+            echo "##################"
+            exit
+        fi
+
+        echo "Deteniendo $OPTARG..."
+        echo `$GLASSFISH_HOME/bin/asadmin stop-domain $OPTARG` 
+
+        argumentProcessed=1
+         ;;
+    r)
+        if [ $argumentProcessed -eq 1 ]; then
+            echo "##################"
+            echo "El comando solo acepta un argumento"
+            echo "##################"
+            exit
+        fi
+
+        echo "Reiniciando dominio $OPTARG"
+        echo "Deteniendo..."
+        echo `$GLASSFISH_HOME/bin/asadmin stop-domain $OPTARG`
+        echo "Iniciando..."
+        echo `$GLASSFISH_HOME/bin/asadmin start-domain $OPTARG`  
+         #DO_LIST=1
+        argumentProcessed=1
+         ;;
+
+    *)
+        echo "##################"
+        echo "Mal uso del comando domaccion"
+        echo "##################"
+        #echo "Here's the usage statement:"
+        #echo ""
+        #displayTpUsageStatement
+        #return
+        ;;
+        esac
+done
+
